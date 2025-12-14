@@ -4,18 +4,14 @@ import ThreeCanvas from '$lib/components/ThreeCanvas.svelte';
 // UI state
 let nodeCount = 600;
 let nodeColor = '#00e5ff';
-let speed = 1.0;
-let animateOn = true;
 </script>
 
-<ThreeCanvas {nodeCount} {nodeColor} {speed} {animateOn} />
+<ThreeCanvas {nodeCount} {nodeColor} />
 
 <div class="overlay">
 	<h2>Scene Settings</h2>
 	<label>Nodes: <input type="number" min="10" max="5000" bind:value={nodeCount} /></label>
 	<label>Color: <input type="color" bind:value={nodeColor} /></label>
-	<label>Speed: <input type="range" min="0" max="5" step="0.1" bind:value={speed} /> {speed}</label>
-	<label><input type="checkbox" bind:checked={animateOn} /> Animate</label>
 	<div class="hint">Tip: adjust nodes and speed for different effects</div>
 </div>
 
