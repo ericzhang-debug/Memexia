@@ -11,5 +11,10 @@ export default defineConfig({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide'
 		})
-	]
+	],
+	resolve: {
+		alias: {
+			'esm-env/browser': 'esm-env/browser-fallback.js'
+		}
+	}
 });
