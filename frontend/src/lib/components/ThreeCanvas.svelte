@@ -5,8 +5,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export let nodeCount: number = 600;
 export let nodeColor: string = '#00e5ff';
-export let speed: number = 1.0;
-export let animateOn: boolean = true;
 
 let canvas: HTMLCanvasElement | null = null;
 let scene: THREE.Scene;

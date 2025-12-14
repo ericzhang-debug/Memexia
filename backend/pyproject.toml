@@ -5,7 +5,18 @@ description = "Default template for PDM package"
 authors = [
     {name = "XuChenXu", email = "91937041+ChenXu233@users.noreply.github.com"},
 ]
-dependencies = ["fastapi>=0.124.4", "sqlalchemy>=2.0.45", "uvicorn>=0.38.0"]
+dependencies = [
+    "fastapi>=0.124.4",
+    "uvicorn>=0.38.0",
+    "neo4j>=5.14.0",
+    "chromadb>=0.4.22",
+    "sentence-transformers>=2.2.2",
+    "sqlalchemy>=2.0.25",
+    "passlib[bcrypt]>=1.7.4",
+    "python-jose[cryptography]>=3.3.0",
+    "python-multipart>=0.0.9",
+    "pydantic-settings>=2.12.0"
+]
 requires-python = ">=3.13"
 readme = "README.md"
 license = {text = "GNU AGPL v3"}
@@ -17,3 +28,6 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[tool.pdm.scripts]
+start = "uvicorn memexia_backend.main:app --host 0.0.0.0 --port 8000"
