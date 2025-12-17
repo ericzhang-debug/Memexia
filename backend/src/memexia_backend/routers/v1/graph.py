@@ -10,6 +10,6 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-@router.get("/", response_model=GraphData)
-def read_graph(session: Session = Depends(get_neo4j_session)):
-    return graph_service.get_graph_data(session)
+@router.get("/{knowledge_base_id}", response_model=GraphData)
+def read_graph(knowledge_base_id: str, session: Session = Depends(get_neo4j_session)):
+    return graph_service.get_graph_data(session, knowledge_base_id)

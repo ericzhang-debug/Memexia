@@ -1,19 +1,52 @@
+import logging
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from memexia_backend.routers import graph_router, nodes_router, auth_router
-from memexia_backend.database import close_connections
+
+from memexia_backend.routers import (
+    graph_router,
+    nodes_router,
+    auth_router,
+    knowledge_bases_router,
+    users_router,
+    admin_router,
+)
+from memexia_backend.database import close_connections, SessionLocal
 from memexia_backend.database import engine, Base
+from memexia_backend.services.init_service import init_database
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # Create SQL database tables
 Base.metadata.create_all(bind=engine)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Application lifespan handler for startup and shutdown tasks."""
+    # Startup
+    logger.info("Starting Memexia Backend...")
+
+    # Initialize database (create superuser, etc.)
+    db = SessionLocal()
     try:
-        yield
+        init_database(db)
     finally:
-        close_connections()
+        db.close()
+
+    logger.info("Memexia Backend started successfully")
+
+    yield
+
+    # Shutdown
+    logger.info("Shutting down Memexia Backend...")
+    close_connections()
+    logger.info("Memexia Backend shutdown complete")
 
 
 app = FastAPI(
@@ -35,9 +68,12 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(graph_router)
 app.include_router(nodes_router)
+app.include_router(knowledge_bases_router)
+app.include_router(users_router)
+app.include_router(admin_router)
 
-# Lifespan handler ensures connections are closed on shutdown.
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Memexia API"}
+    """Root endpoint - health check."""
+    return {"message": "Welcome to Memexia API", "status": "healthy"}

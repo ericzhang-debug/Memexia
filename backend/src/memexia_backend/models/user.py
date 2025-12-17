@@ -1,13 +1,54 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Integer, String, Boolean, DateTime
 from sqlalchemy.sql import func
-from ..sql_database import Base
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+
+from typing import Optional, TYPE_CHECKING
+from datetime import datetime
+
+
+from ..database import Base
+from ..enums import UserRole
+
+
+if TYPE_CHECKING:
+    from .knowledge_base import KnowledgeBase
 
 class User(Base):
+    """User model with role-based access control."""
+
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    username: Mapped[str] = mapped_column(
+        String, unique=True, index=True, nullable=False
+    )
+    phone_number: Mapped[Optional[str]] = mapped_column(
+        String, unique=True, index=True, nullable=True
+    )
+    qq_openid: Mapped[Optional[str]] = mapped_column(
+        String, unique=True, index=True, nullable=True
+    )
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[str] = mapped_column(
+        String, default=UserRole.USER.value, nullable=False
+    )
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # Relationships
+    knowledge_bases: Mapped[list["KnowledgeBase"]] = relationship(
+        "KnowledgeBase", back_populates="owner", cascade="all, delete-orphan"
+    )
+
+    @property
+    def is_admin(self) -> bool:
+        """Check if user is admin or superuser."""
+        return bool((self.role == UserRole.ADMIN.value) or self.is_superuser)
