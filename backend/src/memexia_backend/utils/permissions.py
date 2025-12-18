@@ -196,7 +196,7 @@ def get_current_user_optional() -> Callable:
     """
     from memexia_backend.routers.v1.auth import oauth2_scheme, get_user
     from memexia_backend.database import get_db
-    from memexia_backend.utils.config import settings
+    from memexia_backend.config import settings
     from jose import JWTError, jwt
     from sqlalchemy.orm import Session
 

@@ -22,7 +22,7 @@ from memexia_backend.utils.security import (
     create_access_token,
     verify_token_and_get_user,
 )
-from memexia_backend.utils.config import settings
+from memexia_backend.config import settings
 from memexia_backend.utils.email import (
     send_verification_email,
     send_password_reset_email,
@@ -58,7 +58,7 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
         )
         if not payload:
             raise credentials_exception

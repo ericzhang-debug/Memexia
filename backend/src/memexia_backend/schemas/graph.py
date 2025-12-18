@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List
+
 from .node import Node
 from .edge import Edge
 

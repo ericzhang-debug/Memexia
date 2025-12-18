@@ -2,7 +2,7 @@ import json
 from sqlalchemy.orm import Session
 from memexia_backend.models import SystemSetting
 from memexia_backend.schemas import AuthSettings
-from memexia_backend.utils.config import settings as env_settings
+from memexia_backend.config import settings as env_settings
 
 from typing import Any
 

@@ -1,21 +1,38 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
-from passlib.context import CryptContext
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+import bcrypt
 
-from .config import settings
-from ..models import User
+from ..config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+if TYPE_CHECKING:
+    from ..models import User
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    """Hash a password using bcrypt, handling the 72-byte limit.
+
+    Bcrypt has a 72-byte limit for passwords. If the password is longer,
+    it will be truncated to 72 bytes to avoid errors.
+    """
+    # Convert to bytes and truncate to 72 bytes if necessary
+    password_bytes = password.encode("utf-8")[:72]
+
+    # Use bcrypt directly
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode("utf-8")
+
+def verify_password(plain_password, hashed_password):
+    """Verify a password against a bcrypt hash."""
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -24,10 +41,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
-def verify_token_and_get_user(token: str, token_type: str, db: Session) -> User:
+def verify_token_and_get_user(token: str, token_type: str, db: Session) -> "User":
     """
     Verify JWT token and retrieve the associated user.
 
@@ -42,6 +61,8 @@ def verify_token_and_get_user(token: str, token_type: str, db: Session) -> User:
     Raises:
         HTTPException: If token is invalid, expired, wrong type, or user not found
     """
+    from ..models import User  # Import here to avoid circular dependency
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -49,7 +70,7 @@ def verify_token_and_get_user(token: str, token_type: str, db: Session) -> User:
     )
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
         )
         username: Optional[str] = payload.get("sub")
         type_in_token: Optional[str] = payload.get("type")

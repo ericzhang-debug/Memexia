@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:05e5012341b94e0812049297e5ba1f4cddffbe7a8ab85ccc82eae6c5e3a760c3"
+content_hash = "sha256:082b4176562de2287f0806ac8957bdc05f146b02726b316db0f76519ff96d7f1"
 
 [[metadata.targets]]
 requires_python = ">=3.13"
@@ -383,6 +383,15 @@ files = [
 ]
 
 [[package]]
+name = "dnspython"
+version = "2.8.0"
+summary = ""
+files = [
+    {file = "dnspython-2.8.0-py3-none-any.whl", hash = "sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af"},
+    {file = "dnspython-2.8.0.tar.gz", hash = "sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f"},
+]
+
+[[package]]
 name = "durationpy"
 version = "0.10"
 summary = ""
@@ -401,6 +410,19 @@ dependencies = [
 files = [
     {file = "ecdsa-0.19.1-py2.py3-none-any.whl", hash = "sha256:30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3"},
     {file = "ecdsa-0.19.1.tar.gz", hash = "sha256:478cba7b62555866fcb3bb3fe985e06decbdb68ef55713c4e5ab98c57d508e61"},
+]
+
+[[package]]
+name = "email-validator"
+version = "2.3.0"
+summary = ""
+dependencies = [
+    "dnspython",
+    "idna",
+]
+files = [
+    {file = "email_validator-2.3.0-py3-none-any.whl", hash = "sha256:80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4"},
+    {file = "email_validator-2.3.0.tar.gz", hash = "sha256:9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426"},
 ]
 
 [[package]]
@@ -443,6 +465,15 @@ summary = ""
 files = [
     {file = "fsspec-2025.12.0-py3-none-any.whl", hash = "sha256:8bf1fe301b7d8acfa6e8571e3b1c3d158f909666642431cc78a1b7b4dbc5ec5b"},
     {file = "fsspec-2025.12.0.tar.gz", hash = "sha256:c505de011584597b1060ff778bb664c1bc022e87921b0e4f10cc9c44f9635973"},
+]
+
+[[package]]
+name = "future"
+version = "1.0.0"
+summary = ""
+files = [
+    {file = "future-1.0.0-py3-none-any.whl", hash = "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216"},
+    {file = "future-1.0.0.tar.gz", hash = "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05"},
 ]
 
 [[package]]
@@ -543,6 +574,19 @@ files = [
 ]
 
 [[package]]
+name = "h2"
+version = "4.3.0"
+summary = ""
+dependencies = [
+    "hpack",
+    "hyperframe",
+]
+files = [
+    {file = "h2-4.3.0-py3-none-any.whl", hash = "sha256:c438f029a25f7945c69e0ccf0fb951dc3f73a5f6412981daee861431b70e2bdd"},
+    {file = "h2-4.3.0.tar.gz", hash = "sha256:6c59efe4323fa18b47a632221a1888bd7fde6249819beda254aeca909f221bf1"},
+]
+
+[[package]]
 name = "hf-xet"
 version = "1.2.0"
 summary = ""
@@ -572,6 +616,15 @@ files = [
 ]
 
 [[package]]
+name = "hpack"
+version = "4.1.0"
+summary = ""
+files = [
+    {file = "hpack-4.1.0-py3-none-any.whl", hash = "sha256:157ac792668d995c657d93111f46b4535ed114f0c9c8d672271bbec7eae1b496"},
+    {file = "hpack-4.1.0.tar.gz", hash = "sha256:ec5eca154f7056aa06f196a557655c5b009b382873ac8d1e66e79e87535f1dca"},
+]
+
+[[package]]
 name = "httpcore"
 version = "1.0.9"
 summary = ""
@@ -582,6 +635,18 @@ dependencies = [
 files = [
     {file = "httpcore-1.0.9-py3-none-any.whl", hash = "sha256:2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55"},
     {file = "httpcore-1.0.9.tar.gz", hash = "sha256:6e34463af53fd2ab5d807f399a9b45ea31c3dfa2276f15a2c3f00afff6e176e8"},
+]
+
+[[package]]
+name = "httplib2"
+version = "0.31.0"
+summary = ""
+dependencies = [
+    "pyparsing",
+]
+files = [
+    {file = "httplib2-0.31.0-py3-none-any.whl", hash = "sha256:b9cd78abea9b4e43a7714c6e0f8b6b8561a6fc1e95d5dbd367f5bf0ef35f5d24"},
+    {file = "httplib2-0.31.0.tar.gz", hash = "sha256:ac7ab497c50975147d4f7b1ade44becc7df2f8954d42b38b3d69c515f531135c"},
 ]
 
 [[package]]
@@ -622,6 +687,20 @@ files = [
 ]
 
 [[package]]
+name = "httpx"
+version = "0.28.1"
+extras = ["http2"]
+summary = ""
+dependencies = [
+    "h2",
+    "httpx==0.28.1",
+]
+files = [
+    {file = "httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"},
+    {file = "httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc"},
+]
+
+[[package]]
 name = "huggingface-hub"
 version = "0.36.0"
 summary = ""
@@ -650,6 +729,15 @@ dependencies = [
 files = [
     {file = "humanfriendly-10.0-py2.py3-none-any.whl", hash = "sha256:1697e1a8a8f550fd43c2865cd84542fc175a61dcb779b6fee18cf6b6ccba1477"},
     {file = "humanfriendly-10.0.tar.gz", hash = "sha256:6b0b831ce8f15f7300721aa49829fc4e83921a9a301cc7f606be6686a2288ddc"},
+]
+
+[[package]]
+name = "hyperframe"
+version = "6.1.0"
+summary = ""
+files = [
+    {file = "hyperframe-6.1.0-py3-none-any.whl", hash = "sha256:b03380493a519fce58ea5af42e4a42317bf9bd425596f7a0835ffce80f1a42e5"},
+    {file = "hyperframe-6.1.0.tar.gz", hash = "sha256:f630908a00854a7adeabd6382b43923a4c4cd4b821fcb527e6ab9e15382a3b08"},
 ]
 
 [[package]]
@@ -898,15 +986,19 @@ files = [
 ]
 
 [[package]]
-name = "neo4j"
-version = "6.0.3"
+name = "nebula3-python"
+version = "3.8.3"
 summary = ""
 dependencies = [
+    "future",
+    "httplib2",
+    "httpx[http2]",
     "pytz",
+    "six",
 ]
 files = [
-    {file = "neo4j-6.0.3-py3-none-any.whl", hash = "sha256:a92023854da96aed4270e0d03d6429cdd7f0d3335eae977370934f4732de5678"},
-    {file = "neo4j-6.0.3.tar.gz", hash = "sha256:7fb79e166e281aafd67d521f6611763ebcdc529f26db506c5605f91ddcd825ea"},
+    {file = "nebula3_python-3.8.3-py3-none-any.whl", hash = "sha256:ef583d15c012751cce05bcf8b3869881dbbc3286c6e3fa8b5c65b7c5bb808c38"},
+    {file = "nebula3_python-3.8.3.tar.gz", hash = "sha256:da4693171079e9d5efb01a579f7fb62ef7655f6169cc2ff2cbb7b7d902e2cf3d"},
 ]
 
 [[package]]
@@ -1534,12 +1626,35 @@ files = [
 ]
 
 [[package]]
+name = "pydantic"
+version = "2.12.5"
+extras = ["email"]
+summary = ""
+dependencies = [
+    "email-validator",
+    "pydantic==2.12.5",
+]
+files = [
+    {file = "pydantic-2.12.5-py3-none-any.whl", hash = "sha256:e561593fccf61e8a20fc46dfc2dfe075b8be7d0188df33f221ad1f0139180f9d"},
+    {file = "pydantic-2.12.5.tar.gz", hash = "sha256:4d351024c75c0f085a9febbb665ce8c0c6ec5d30e903bdb6394b7ede26aebb49"},
+]
+
+[[package]]
 name = "pygments"
 version = "2.19.2"
 summary = ""
 files = [
     {file = "pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b"},
     {file = "pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887"},
+]
+
+[[package]]
+name = "pyparsing"
+version = "3.2.5"
+summary = ""
+files = [
+    {file = "pyparsing-3.2.5-py3-none-any.whl", hash = "sha256:e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e"},
+    {file = "pyparsing-3.2.5.tar.gz", hash = "sha256:2df8d5b7b2802ef88e8d016a2eb9c7aeaa923529cd251ed0fe4608275d4105b6"},
 ]
 
 [[package]]

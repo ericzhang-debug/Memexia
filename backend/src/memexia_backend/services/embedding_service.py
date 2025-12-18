@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from memexia_backend.utils.config import settings
+from memexia_backend.config import settings
 
 class EmbeddingService:
     def __init__(self):

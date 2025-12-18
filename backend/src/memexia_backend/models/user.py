@@ -8,6 +8,7 @@ from datetime import datetime
 
 from ..database import Base
 from ..enums import UserRole
+from ..utils.security import get_password_hash
 
 
 if TYPE_CHECKING:
@@ -52,3 +53,11 @@ class User(Base):
     def is_admin(self) -> bool:
         """Check if user is admin or superuser."""
         return bool((self.role == UserRole.ADMIN.value) or self.is_superuser)
+
+    @property
+    def password(self) -> str:
+        raise AttributeError("Password is write-only.")
+
+    @password.setter
+    def password(self, password: str) -> None:
+        self.hashed_password = get_password_hash(password)

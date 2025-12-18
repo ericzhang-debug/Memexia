@@ -27,6 +27,7 @@ from .system_setting import (
     SystemSettingUpdate,
     AuthSettings,
 )
+from .auth_reset import PasswordResetRequest, PasswordResetConfirm
 
 __all__ = [
     "Node",
@@ -59,4 +60,3 @@ __all__ = [
     "PasswordResetRequest",
     "PasswordResetConfirm",
 ]
-from .auth_reset import PasswordResetRequest, PasswordResetConfirm

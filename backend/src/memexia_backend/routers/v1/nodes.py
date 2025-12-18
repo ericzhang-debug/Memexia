@@ -1,23 +1,30 @@
 """
 Node API routes with knowledge base isolation.
 
-All node operations are scoped to a specific knowledge base.
+Each knowledge base has its own NebulaGraph Space for data isolation.
 """
 
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from neo4j import Session
 from chromadb.api.models.Collection import Collection
 from sqlalchemy.orm import Session as SQLSession
 
-from memexia_backend.database import get_neo4j_session, get_chroma_collection, get_db
-from memexia_backend.schemas import Node, NodeCreate, NodeUpdate, AIExpandRequest
+from memexia_backend.database import (
+    get_nebula_session_for_kb,
+    get_chroma_collection,
+    get_db,
+)
+from memexia_backend.schemas import (
+    Node,
+    NodeCreate,
+    NodeUpdate,
+    AIExpandRequest,
+    GraphData,
+)
 from memexia_backend.services import graph_service, ai_service
 from memexia_backend.services.knowledge_base_service import knowledge_base_service
 from memexia_backend.models import User
 from memexia_backend.routers.v1.auth import get_current_user
-from memexia_backend.enums import Permission
-from memexia_backend.utils.permissions import check_permission
 
 router = APIRouter(
     prefix="/api/v1/knowledge-bases/{kb_id}/nodes",
@@ -65,12 +72,11 @@ def get_kb_with_access(
     return kb
 
 
-@router.post("", response_model=Node, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=Node, status_code=status.HTTP_201_CREATED)
 def create_node(
     kb_id: str,
     node: NodeCreate,
     db: SQLSession = Depends(get_db),
-    neo4j_session: Session = Depends(get_neo4j_session),
     collection: Collection = Depends(get_chroma_collection),
     current_user: User = Depends(get_current_user),
 ):
@@ -82,15 +88,16 @@ def create_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
-    return graph_service.create_node(neo4j_session, collection, node, kb_id)
+    # Get session for this knowledge base's space
+    for session in get_nebula_session_for_kb(kb_id):
+        return graph_service.create_node(session, collection, node, kb_id)
 
 
-@router.get("", response_model=dict)
+@router.get("/", response_model=GraphData)
 def get_all_nodes(
     kb_id: str,
     db: SQLSession = Depends(get_db),
-    neo4j_session: Session = Depends(get_neo4j_session),
-    current_user: Optional[User] = None,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get all nodes and edges in a knowledge base.
@@ -100,7 +107,9 @@ def get_all_nodes(
     # Verify KB access (read)
     get_kb_with_access(kb_id, db, current_user, require_write=False)
 
-    return graph_service.get_graph_data(neo4j_session, kb_id)
+    # Get session for this knowledge base's space
+    for session in get_nebula_session_for_kb(kb_id):
+        return graph_service.get_graph_data(session)
 
 
 @router.get("/{node_id}", response_model=Node)
@@ -108,8 +117,7 @@ def read_node(
     kb_id: str,
     node_id: str,
     db: SQLSession = Depends(get_db),
-    neo4j_session: Session = Depends(get_neo4j_session),
-    current_user: Optional[User] = None,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get a specific node in a knowledge base.
@@ -117,10 +125,12 @@ def read_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=False)
 
-    db_node = graph_service.get_node(neo4j_session, node_id=node_id, knowledge_base_id=kb_id)
-    if db_node is None:
-        raise HTTPException(status_code=404, detail="Node not found")
-    return db_node
+    # Get session for this knowledge base's space
+    for session in get_nebula_session_for_kb(kb_id):
+        db_node = graph_service.get_node(session, node_id=node_id)
+        if db_node is None:
+            raise HTTPException(status_code=404, detail="Node not found")
+        return db_node
 
 
 @router.put("/{node_id}", response_model=Node)
@@ -129,7 +139,6 @@ def update_node(
     node_id: str,
     node: NodeUpdate,
     db: SQLSession = Depends(get_db),
-    neo4j_session: Session = Depends(get_neo4j_session),
     current_user: User = Depends(get_current_user),
 ):
     """
@@ -140,12 +149,12 @@ def update_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
-    db_node = graph_service.update_node(
-        neo4j_session, node_id=node_id, node=node, knowledge_base_id=kb_id
-    )
-    if db_node is None:
-        raise HTTPException(status_code=404, detail="Node not found")
-    return db_node
+    # Get session for this knowledge base's space
+    for session in get_nebula_session_for_kb(kb_id):
+        db_node = graph_service.update_node(session, node_id=node_id, node=node)
+        if db_node is None:
+            raise HTTPException(status_code=404, detail="Node not found")
+        return db_node
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -153,7 +162,6 @@ def delete_node(
     kb_id: str,
     node_id: str,
     db: SQLSession = Depends(get_db),
-    neo4j_session: Session = Depends(get_neo4j_session),
     collection: Collection = Depends(get_chroma_collection),
     current_user: User = Depends(get_current_user),
 ):
@@ -165,11 +173,11 @@ def delete_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
-    deleted = graph_service.delete_node(
-        neo4j_session, collection, node_id=node_id, knowledge_base_id=kb_id
-    )
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Node not found")
+    # Get session for this knowledge base's space
+    for session in get_nebula_session_for_kb(kb_id):
+        deleted = graph_service.delete_node(session, collection, node_id=node_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Node not found")
 
 
 @router.post("/{node_id}/expand", response_model=List[Node])
@@ -178,7 +186,6 @@ def expand_node(
     node_id: str,
     request: AIExpandRequest,
     db: SQLSession = Depends(get_db),
-    neo4j_session: Session = Depends(get_neo4j_session),
     collection: Collection = Depends(get_chroma_collection),
     current_user: User = Depends(get_current_user),
 ):
@@ -191,9 +198,10 @@ def expand_node(
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
     try:
-        # TODO: Update ai_service to support knowledge_base_id
-        return ai_service.expand_node(
-            neo4j_session, collection, node_id, request.instruction
-        )
+        # Get session for this knowledge base's space
+        for session in get_nebula_session_for_kb(kb_id):
+            return ai_service.expand_node(
+                session, collection, node_id, kb_id, request.instruction
+            )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

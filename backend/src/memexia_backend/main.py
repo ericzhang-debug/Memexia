@@ -11,9 +11,9 @@ from memexia_backend.routers import (
     users_router,
     admin_router,
 )
-from memexia_backend.database import close_connections, SessionLocal
+from memexia_backend.database import close_connections
 from memexia_backend.database import engine, Base
-from memexia_backend.services.init_service import init_database
+from memexia_backend.services.init_service import init_all_services
 
 # Configure logging
 logging.basicConfig(
@@ -30,23 +30,29 @@ Base.metadata.create_all(bind=engine)
 async def lifespan(app: FastAPI):
     """Application lifespan handler for startup and shutdown tasks."""
     # Startup
-    logger.info("Starting Memexia Backend...")
+    logger.info("🚀 Starting Memexia Backend...")
 
-    # Initialize database (create superuser, etc.)
-    db = SessionLocal()
+    # Initialize all services including Neo4j deployment
     try:
-        init_database(db)
-    finally:
-        db.close()
+        init_all_services()
+    except SystemExit:
+        # Allow graceful exit if initialization fails
+        logger.error("❌ Service initialization failed, exiting...")
+        yield
+        return
+    except Exception as e:
+        logger.error(f"❌ Unexpected error during initialization: {e}")
+        yield
+        return
 
-    logger.info("Memexia Backend started successfully")
+    logger.info("✅ Memexia Backend started successfully")
 
     yield
 
     # Shutdown
-    logger.info("Shutting down Memexia Backend...")
+    logger.info("🛑 Shutting down Memexia Backend...")
     close_connections()
-    logger.info("Memexia Backend shutdown complete")
+    logger.info("✅ Memexia Backend shutdown complete")
 
 
 app = FastAPI(

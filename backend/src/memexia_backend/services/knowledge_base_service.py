@@ -112,7 +112,7 @@ class KnowledgeBaseService:
 
         if user is None:
             # Guest: only public knowledge bases
-            query = query.filter(KnowledgeBase.is_public == True)
+            query = query.filter(KnowledgeBase.is_public)
         elif owner_only:
             # Only user's own knowledge bases
             query = query.filter(KnowledgeBase.owner_id == user.id)
@@ -124,7 +124,7 @@ class KnowledgeBaseService:
             query = query.filter(
                 or_(
                     KnowledgeBase.owner_id == user.id,
-                    KnowledgeBase.is_public == True,
+                    KnowledgeBase.is_public,
                 )
             )
 

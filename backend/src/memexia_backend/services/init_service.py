@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 
 from memexia_backend.models import User
 from memexia_backend.enums import UserRole
-from memexia_backend.utils.config import settings
-from memexia_backend.utils.security import get_password_hash
+from memexia_backend.config import settings
+from memexia_backend.utils.security import verify_password
 
 
 logger = logging.getLogger(__name__)
@@ -39,15 +39,20 @@ def init_superuser(db: Session) -> None:
     # Check if any superuser already exists
     existing_superuser = db.query(User).filter(User.is_superuser).first()
 
+    # Determine password
+    password = settings.SUPERUSER_PASSWORD
+    password_was_generated = False
+
     if existing_superuser:
         logger.info(
             f"Superuser already exists: {existing_superuser.username}"
         )
+        if verify_password(password, existing_superuser.hashed_password):
+            logger.info("Superuser password is correct")
+        else:
+            existing_superuser.password = password
         return
 
-    # Determine password
-    password = settings.SUPERUSER_PASSWORD
-    password_was_generated = False
 
     if not password:
         password = generate_random_password()
@@ -64,12 +69,10 @@ def init_superuser(db: Session) -> None:
         )
 
     # Create superuser
-    hashed_password = get_password_hash(password)
-
     superuser = User(
         email=settings.SUPERUSER_EMAIL,
         username=settings.SUPERUSER_USERNAME,
-        hashed_password=hashed_password,
+        password=password,
         role=UserRole.ADMIN.value,
         is_superuser=True,
         is_active=True,
@@ -103,3 +106,37 @@ def init_database(db: Session) -> None:
     init_superuser(db)
 
     logger.info("Database initialization complete")
+
+
+def init_all_services() -> None:
+    """
+    Initialize all required services including NebulaGraph deployment.
+
+    This function is called during FastAPI startup and handles:
+    - NebulaGraph auto-deployment
+    - Database schema initialization
+    - Superuser creation
+    """
+    import sys
+
+    logger.info("🚀 Initializing all services...")
+
+    try:
+        from ..database import SessionLocal
+        from ..services.nebula_deployer import NebulaDeployer
+
+        # Initialize NebulaGraph
+        nebula_deployer = NebulaDeployer()
+        nebula_deployer.deploy()
+
+        db = SessionLocal()
+        try:
+            init_database(db)
+        finally:
+            db.close()
+
+        logger.info("✅ All services initialized successfully")
+
+    except Exception as e:
+        logger.error(f"❌ Service initialization failed: {e}")
+        sys.exit(1)

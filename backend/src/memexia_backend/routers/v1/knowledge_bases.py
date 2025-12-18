@@ -4,7 +4,6 @@ Knowledge Base API routes.
 This module provides REST API endpoints for knowledge base management.
 """
 
-from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -32,7 +31,7 @@ def list_knowledge_bases(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     mine_only: bool = Query(False, description="Only show my knowledge bases"),
     db: Session = Depends(get_db),
-    current_user: Optional[User] = None,
+    current_user: User = Depends(get_current_user),
 ):
     """
     List knowledge bases.
@@ -110,7 +109,7 @@ def create_knowledge_base(
 def get_knowledge_base(
     kb_id: str,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = None,
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get a specific knowledge base.

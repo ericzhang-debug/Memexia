@@ -1,7 +1,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from memexia_backend.utils.config import settings
+from memexia_backend.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
