@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
+import re
 
 from memexia_backend.enums import UserRole
 
@@ -8,8 +9,18 @@ from memexia_backend.enums import UserRole
 class UserBase(BaseModel):
     """Base user schema with common fields."""
 
-    email: EmailStr
+    email: str
     username: str = Field(..., min_length=3, max_length=50)
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        """Custom email validator that allows .local domains."""
+        # Basic email pattern that allows .local domains
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(pattern, v):
+            raise ValueError('Invalid email address')
+        return v.lower()
 
 
 class UserCreate(UserBase):
@@ -28,8 +39,19 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     """Schema for updating user profile (self)."""
 
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     username: Optional[str] = Field(None, min_length=3, max_length=50)
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v: Optional[str]) -> Optional[str]:
+        """Custom email validator that allows .local domains."""
+        if v is None:
+            return v
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(pattern, v):
+            raise ValueError('Invalid email address')
+        return v.lower()
 
 
 class UserRoleUpdate(BaseModel):
@@ -69,13 +91,22 @@ class UserList(BaseModel):
     """User list item schema (for admin view)."""
 
     id: int
-    email: EmailStr
+    email: str
     username: str
     role: str
     is_superuser: bool
     is_active: bool
     is_verified: bool
     created_at: datetime
+
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        """Custom email validator that allows .local domains."""
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(pattern, v):
+            raise ValueError('Invalid email address')
+        return v.lower()
 
     class Config:
         from_attributes = True

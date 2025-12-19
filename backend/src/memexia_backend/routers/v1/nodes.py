@@ -6,6 +6,7 @@ Each knowledge base has its own database/space for data isolation.
 
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from chromadb.api.models.Collection import Collection
 from sqlalchemy.orm import Session as SQLSession
 
@@ -179,7 +180,9 @@ def expand_node(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Expand a node using AI to generate related thoughts.
+    Expand a node using AI to generate related thoughts (synchronous).
+
+    For streaming expansion, use the /expand-stream endpoint instead.
 
     Requires write access to the knowledge base.
     """
@@ -190,3 +193,63 @@ def expand_node(
         return ai_service.expand_node(collection, node_id, kb_id, request.instruction)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/{node_id}/expand-stream")
+async def expand_node_stream(
+    kb_id: str,
+    node_id: str,
+    request: AIExpandRequest,
+    db: SQLSession = Depends(get_db),
+    collection: Collection = Depends(get_chroma_collection),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Expand a node using AI with Server-Sent Events streaming.
+
+    This endpoint streams the AI expansion process in real-time, providing
+    updates as the AI generates new concepts and creates nodes.
+
+    **Event Types:**
+    - `start`: Expansion started, includes source node info
+    - `thinking`: AI is processing
+    - `chunk`: Streaming text chunk from AI
+    - `parsing`: AI response is being parsed
+    - `node_created`: A new node was created
+    - `complete`: Expansion finished successfully
+    - `error`: An error occurred
+
+    **Example SSE Events:**
+    ```
+    data: {"type": "start", "source_node": {"id": "...", "content": "..."}}
+
+    data: {"type": "thinking", "message": "AI is analyzing..."}
+
+    data: {"type": "chunk", "content": "partial response..."}
+
+    data: {"type": "node_created", "node": {...}, "relation": "related_to"}
+
+    data: {"type": "complete", "total_nodes": 3}
+    ```
+
+    Requires write access to the knowledge base.
+    """
+    # Verify KB access
+    get_kb_with_access(kb_id, db, current_user, require_write=True)
+
+    # Verify node exists
+    existing_node = graph_service.get_node(node_id, kb_id)
+    if not existing_node:
+        raise HTTPException(status_code=404, detail="Node not found")
+
+    return StreamingResponse(
+        ai_service.expand_node_stream(
+            collection, node_id, kb_id, request.instruction
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

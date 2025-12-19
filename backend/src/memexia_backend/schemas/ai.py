@@ -1,9 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
+
 class AIExpandRequest(BaseModel):
-    node_id: str
-    instruction: str
+    """Request body for AI node expansion."""
+    instruction: Optional[str] = None
+
 
 class AIChatRequest(BaseModel):
     message: str
