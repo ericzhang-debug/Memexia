@@ -2,9 +2,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from memexia_backend.config import settings
-import logging
+from memexia_backend.logger import logger
 
-logger = logging.getLogger(__name__)
 
 def send_verification_email(email: str, token: str):
     """

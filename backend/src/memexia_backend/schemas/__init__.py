@@ -26,6 +26,7 @@ from .system_setting import (
     SystemSettingCreate,
     SystemSettingUpdate,
     AuthSettings,
+    GraphDBSettings,
 )
 from .auth_reset import PasswordResetRequest, PasswordResetConfirm
 
@@ -57,6 +58,7 @@ __all__ = [
     "SystemSettingCreate",
     "SystemSettingUpdate",
     "AuthSettings",
+    "GraphDBSettings",
     "PasswordResetRequest",
     "PasswordResetConfirm",
 ]

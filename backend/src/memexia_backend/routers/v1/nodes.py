@@ -1,7 +1,7 @@
 """
 Node API routes with knowledge base isolation.
 
-Each knowledge base has its own NebulaGraph Space for data isolation.
+Each knowledge base has its own database/space for data isolation.
 """
 
 from typing import List, Optional
@@ -10,7 +10,6 @@ from chromadb.api.models.Collection import Collection
 from sqlalchemy.orm import Session as SQLSession
 
 from memexia_backend.database import (
-    get_nebula_session_for_kb,
     get_chroma_collection,
     get_db,
 )
@@ -88,9 +87,7 @@ def create_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
-    # Get session for this knowledge base's space
-    for session in get_nebula_session_for_kb(kb_id):
-        return graph_service.create_node(session, collection, node, kb_id)
+    return graph_service.create_node(collection, node, kb_id)
 
 
 @router.get("/", response_model=GraphData)
@@ -107,9 +104,7 @@ def get_all_nodes(
     # Verify KB access (read)
     get_kb_with_access(kb_id, db, current_user, require_write=False)
 
-    # Get session for this knowledge base's space
-    for session in get_nebula_session_for_kb(kb_id):
-        return graph_service.get_graph_data(session)
+    return graph_service.get_graph_data(kb_id)
 
 
 @router.get("/{node_id}", response_model=Node)
@@ -125,12 +120,10 @@ def read_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=False)
 
-    # Get session for this knowledge base's space
-    for session in get_nebula_session_for_kb(kb_id):
-        db_node = graph_service.get_node(session, node_id=node_id)
-        if db_node is None:
-            raise HTTPException(status_code=404, detail="Node not found")
-        return db_node
+    db_node = graph_service.get_node(node_id, kb_id)
+    if db_node is None:
+        raise HTTPException(status_code=404, detail="Node not found")
+    return db_node
 
 
 @router.put("/{node_id}", response_model=Node)
@@ -149,12 +142,10 @@ def update_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
-    # Get session for this knowledge base's space
-    for session in get_nebula_session_for_kb(kb_id):
-        db_node = graph_service.update_node(session, node_id=node_id, node=node)
-        if db_node is None:
-            raise HTTPException(status_code=404, detail="Node not found")
-        return db_node
+    db_node = graph_service.update_node(node_id, node, kb_id)
+    if db_node is None:
+        raise HTTPException(status_code=404, detail="Node not found")
+    return db_node
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -173,11 +164,9 @@ def delete_node(
     # Verify KB access
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
-    # Get session for this knowledge base's space
-    for session in get_nebula_session_for_kb(kb_id):
-        deleted = graph_service.delete_node(session, collection, node_id=node_id)
-        if not deleted:
-            raise HTTPException(status_code=404, detail="Node not found")
+    deleted = graph_service.delete_node(collection, node_id, kb_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Node not found")
 
 
 @router.post("/{node_id}/expand", response_model=List[Node])
@@ -198,10 +187,6 @@ def expand_node(
     get_kb_with_access(kb_id, db, current_user, require_write=True)
 
     try:
-        # Get session for this knowledge base's space
-        for session in get_nebula_session_for_kb(kb_id):
-            return ai_service.expand_node(
-                session, collection, node_id, kb_id, request.instruction
-            )
+        return ai_service.expand_node(collection, node_id, kb_id, request.instruction)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -4,7 +4,6 @@ Application initialization services.
 This module handles startup tasks like creating the default superuser.
 """
 
-import logging
 import secrets
 from sqlalchemy.orm import Session
 
@@ -12,9 +11,7 @@ from memexia_backend.models import User
 from memexia_backend.enums import UserRole
 from memexia_backend.config import settings
 from memexia_backend.utils.security import verify_password
-
-
-logger = logging.getLogger(__name__)
+from memexia_backend.logger import logger
 
 
 def generate_random_password(length: int = 16) -> str:
@@ -108,12 +105,33 @@ def init_database(db: Session) -> None:
     logger.info("Database initialization complete")
 
 
+def init_graph_db() -> None:
+    """
+    Initialize the graph database backend.
+
+    Uses Kuzu (embedded) by default, or connects to remote NebulaGraph
+    if configured via GRAPH_DB_TYPE environment variable.
+    """
+    from memexia_backend.services.graph import get_graph_db
+
+    db_type = settings.GRAPH_DB_TYPE
+    logger.info(f"Initializing graph database backend: {db_type}")
+
+    try:
+        # Get (and initialize) the graph database
+        get_graph_db()
+        logger.info(f"✅ Graph database ({db_type}) initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize graph database: {e}")
+        raise
+
+
 def init_all_services() -> None:
     """
-    Initialize all required services including NebulaGraph deployment.
+    Initialize all required services.
 
     This function is called during FastAPI startup and handles:
-    - NebulaGraph auto-deployment
+    - Graph database initialization (Kuzu embedded or NebulaGraph remote)
     - Database schema initialization
     - Superuser creation
     """
@@ -123,12 +141,11 @@ def init_all_services() -> None:
 
     try:
         from ..database import SessionLocal
-        from ..services.nebula_deployer import NebulaDeployer
 
-        # Initialize NebulaGraph
-        nebula_deployer = NebulaDeployer()
-        nebula_deployer.deploy()
+        # Initialize graph database
+        init_graph_db()
 
+        # Initialize SQL database and superuser
         db = SessionLocal()
         try:
             init_database(db)

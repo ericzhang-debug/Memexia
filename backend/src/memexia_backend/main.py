@@ -1,4 +1,3 @@
-import logging
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,13 +13,11 @@ from memexia_backend.routers import (
 from memexia_backend.database import close_connections
 from memexia_backend.database import engine, Base
 from memexia_backend.services.init_service import init_all_services
+from memexia_backend.logger import setup_logging, logger
+from memexia_backend.config import settings
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+setup_logging(settings)
+
 
 # Create SQL database tables
 Base.metadata.create_all(bind=engine)
@@ -38,12 +35,10 @@ async def lifespan(app: FastAPI):
     except SystemExit:
         # Allow graceful exit if initialization fails
         logger.error("❌ Service initialization failed, exiting...")
-        yield
-        return
+        raise SystemExit(1)
     except Exception as e:
         logger.error(f"❌ Unexpected error during initialization: {e}")
-        yield
-        return
+        raise e
 
     logger.info("✅ Memexia Backend started successfully")
 

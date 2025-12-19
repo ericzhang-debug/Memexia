@@ -5,7 +5,6 @@ This service handles all knowledge base related operations including
 creation, retrieval, update, deletion, and copying.
 """
 
-import logging
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -17,8 +16,7 @@ from memexia_backend.schemas import (
 )
 from memexia_backend.enums import Permission
 from memexia_backend.utils.permissions import check_permission
-
-logger = logging.getLogger(__name__)
+from memexia_backend.logger import logger
 
 
 class KnowledgeBaseService:
