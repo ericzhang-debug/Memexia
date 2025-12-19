@@ -12,28 +12,28 @@ if TYPE_CHECKING:
     from ..models import User
 
 def get_password_hash(password):
-    """Hash a password using bcrypt, handling the 72-byte limit.
-
-    Bcrypt has a 72-byte limit for passwords. If the password is longer,
-    it will be truncated to 72 bytes to avoid errors.
     """
-    # Convert to bytes and truncate to 72 bytes if necessary
-    password_bytes = password.encode("utf-8")[:72]
+    Securely hash a password using SHA-256 + bcrypt.
 
-    # Use bcrypt directly
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password_bytes, salt)
+    - Eliminates bcrypt 72-byte truncation issue
+    - Prevents password equivalence attacks
+    - Safe for arbitrarily long passwords
+    """
+    password_digest=hashlib.sha256(password.encode("utf-8")).digest()
+    salt=bcrypt.gensalt()
+    hashed=bcrypt.hashpw(password_digest, salt)
     return hashed.decode("utf-8")
 
 def verify_password(plain_password, hashed_password):
     """Verify a password against a bcrypt hash."""
     try:
+        password_digest = hashlib.sha256(plain_password.encode("utf-8")).digest()
         return bcrypt.checkpw(
-            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+            password_digest,
+            hashed_password.encode("utf-8")
         )
-    except Exception:
+    except ValueError:
         return False
-
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
